@@ -1,0 +1,100 @@
+---
+title: "COVID-19 Regression Analysis"
+author: "Daniel Callow"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+fig_width: 4
+fig_height: 3.5
+---
+
+```{r setup, include=FALSE}
+
+#install.packages("AICcmodavg", dependencies=TRUE)
+library(AICcmodavg)
+library(car)
+library(ggplot2)
+library(psych)
+library(lm.beta)
+library(knitr)
+#install.packages("kableExtra")
+library(kableExtra)
+library(survey)
+library(aod)
+library(mice)
+library(pROC)
+library(nnet)
+library(MASS)
+library(tidyverse)
+library(broom)
+library(dplyr)
+library(Hmisc)
+
+
+```
+
+```{r}
+library(googlesheets4)
+
+setwd("C:/Users/ddcc2/OneDrive/Desktop")
+#dat=read.csv("MAC_Study_Database.csv")
+dat=sheets_read("https://docs.google.com/spreadsheets/d/1R9XuH9Wej-p6HdkFGV2IsHuCmA9w0s7M3-jzE3S-Qrs/edit?usp=drive_web&ouid=113094071975283359728", sheet = "scored_database_4212020")
+dat= dat %>% mutate(age = replace(age, age == "18-29", "18 - 29"))
+dat= dat %>% mutate(age = replace(age, age == "18 -29", "18 - 29"))
+dat= dat %>% mutate(age = replace(age, age == "30-39", "30 - 39"))
+dat= dat %>% mutate(age = replace(age, age == "40-49", "40 - 49"))
+dat= dat %>% mutate(age = replace(age, age == "50-59", "50 - 59"))
+dat= dat %>% mutate(age = replace(age, age == "60-69", "60 - 69"))
+dat= dat %>% mutate(age = replace(age, age == "70-79", "70 - 79"))
+dat= dat %>% mutate(age = replace(age, age == "80-89", "80 - 89"))
+
+
+dat_clean_age = dat %>% filter(age != "18 - 29", age != "30 - 39", age != "40 - 49", age != "N/A" , !is.na(age))
+dat_clean_age=data.frame(dat_clean_age)
+dat_clean_age$gender=factor(dat_clean_age$gender)
+dat_clean_age$age=factor(dat_clean_age$age)
+dat_clean_age$PASE_tot=as.numeric(dat_clean_age$PASE_tot)
+dat_clean_age$GAS_score=as.numeric(dat_clean_age$GAS_score)
+dat_clean_age$depression_tot=as.numeric(dat_clean_age$depression_tot)
+dat_clean_age$loneliness=as.numeric(dat_clean_age$loneliness)
+dat_clean_age$somatic_anxiety=as.numeric(dat_clean_age$somatic_anxiety)
+dat_clean_age$cognitive_anxiety=as.numeric(dat_clean_age$cognitive_anxiety)
+dat_clean_age$affective_anxiety=as.numeric(dat_clean_age$affective_anxiety)
+dat_clean_age$Sedentary_tot=as.numeric(dat_clean_age$Sedentary_tot)
+dat_clean_age$pact_overall_flexibility=as.numeric(dat_clean_age$pact_overall_flexibility)
+```
+
+```{r}
+#library(GGally)
+
+#scatterplotMatrix(~PASE_tot+GAS_score+somatic_anxiety+cognitive_anxiety+affective_anxiety+depression_tot+loneliness,id=list(n=3), data=dat_clean_age)
+
+names=c("PASE_tot","Sedentary_tot","GAS_score","depression_tot","loneliness", "somatic_anxiety","cognitive_anxiety", "affective_anxiety","pact_overall_flexibility")
+
+dat_test=data.frame(cbind(dat_clean_age$PASE_tot,dat_clean_age$Sedentary_tot,dat_clean_age$GAS_score,dat_clean_age$depression_tot,dat_clean_age$loneliness, dat_clean_age$somatic_anxiety,dat_clean_age$cognitive_anxiety,dat_clean_age$affective_anxiety,dat_clean_age$pact_overall_flexibility))
+colnames(dat_test)=names
+
+#pairs(dat_test[,1:9], lower.panel = NULL)
+
+
+rcorr(as.matrix(dat_test), type=c("pearson"))
+
+```
+
+
+```{r}
+#install.packages("mapdata")
+library("mapdata")
+data(zipcode)
+dat_clean_age$zip=clean.zipcodes(dat_clean_age$zip)
+size.zip=aggregate(data.frame(count=dat_clean_age$ID),list(zip=dat_clean_age$zip),length)
+us=map_data('state')
+full=merge(size.zip, zipcode, by="zip")
+
+# Graph
+ggplot(full,aes(longitude,latitude))+geom_polygon(dat=us,aes(x=long,y=lat,group=group), color="gray",fill=NA,alpha=.5) + geom_point(aes(color = count), size=1,alpha=.75)+ scale_color_gradient(low="blue",high="red")+ xlim(-125,-67)+ylim(25,50)+theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+panel.background = element_blank(), axis.line = element_blank(), axis.text.x=element_blank(),
+          axis.text.y=element_blank(),axis.ticks=element_blank(),
+          axis.title.x=element_blank(),axis.title.y=element_blank())
+```
