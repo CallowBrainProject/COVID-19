@@ -51,7 +51,9 @@ dat_clean_age$affective_anxiety=as.numeric(dat_clean_age$affective_anxiety)
 dat_clean_age$Sedentary_tot=as.numeric(dat_clean_age$Sedentary_tot)
 dat_clean_age$pact_overall_flexibility=as.numeric(dat_clean_age$pact_overall_flexibility)
 ```
+
 # Analysis and Visualization of correlations
+
 ```{r}
 # Create names for data we want to analyze
 
@@ -74,15 +76,25 @@ rcorr(as.matrix(dat_test), type=c("pearson"))
 
 # Visualization of responses based on zipcodes
 ```{r}
+# Install packages of mapdata
 #install.packages("mapdata")
 library("mapdata")
 data(zipcode)
+
+# Clean zipcode data with clean.zipcodes() function
 dat_clean_age$zip=clean.zipcodes(dat_clean_age$zip)
+
+# Create variable based on the number of people withing a zipcode
 size.zip=aggregate(data.frame(count=dat_clean_age$ID),list(zip=dat_clean_age$zip),length)
+
+# Import US state data
 us=map_data('state')
+
+# Merge zip.size, and zipcode data into full based on "zip"
 full=merge(size.zip, zipcode, by="zip")
 
-# Graph
+# Graph the zipcode data based on longitude and latitudes overlaid on a map of the US
+
 ggplot(full,aes(longitude,latitude))+geom_polygon(dat=us,aes(x=long,y=lat,group=group), color="gray",fill=NA,alpha=.5) + geom_point(aes(color = count), size=1,alpha=.75)+ scale_color_gradient(low="blue",high="red")+ xlim(-125,-67)+ylim(25,50)+theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
 panel.background = element_blank(), axis.line = element_blank(), axis.text.x=element_blank(),
           axis.text.y=element_blank(),axis.ticks=element_blank(),
