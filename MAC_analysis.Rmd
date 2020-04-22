@@ -10,36 +10,19 @@ fig_height: 3.5
 ---
 
 ```{r setup, include=FALSE}
-
-#install.packages("AICcmodavg", dependencies=TRUE)
-library(AICcmodavg)
-library(car)
-library(ggplot2)
-library(psych)
-library(lm.beta)
-library(knitr)
-#install.packages("kableExtra")
-library(kableExtra)
-library(survey)
-library(aod)
 library(mice)
-library(pROC)
-library(nnet)
-library(MASS)
 library(tidyverse)
-library(broom)
-library(dplyr)
 library(Hmisc)
-
-
 ```
-
+# Data cleaning
 ```{r}
+# Use googlesheets4 library to pull data from google sheets. See https://github.com/tidyverse/googlesheets4 for details
 library(googlesheets4)
 
-setwd("C:/Users/ddcc2/OneDrive/Desktop")
-#dat=read.csv("MAC_Study_Database.csv")
+# Read in data sheet from google sheet
 dat=sheets_read("https://docs.google.com/spreadsheets/d/1R9XuH9Wej-p6HdkFGV2IsHuCmA9w0s7M3-jzE3S-Qrs/edit?usp=drive_web&ouid=113094071975283359728", sheet = "scored_database_4212020")
+
+# Change early issues with age response to correct format
 dat= dat %>% mutate(age = replace(age, age == "18-29", "18 - 29"))
 dat= dat %>% mutate(age = replace(age, age == "18 -29", "18 - 29"))
 dat= dat %>% mutate(age = replace(age, age == "30-39", "30 - 39"))
@@ -49,9 +32,13 @@ dat= dat %>% mutate(age = replace(age, age == "60-69", "60 - 69"))
 dat= dat %>% mutate(age = replace(age, age == "70-79", "70 - 79"))
 dat= dat %>% mutate(age = replace(age, age == "80-89", "80 - 89"))
 
-
+# Filter out subjects for analysis that are younger than 50 or who did not respond with an age
 dat_clean_age = dat %>% filter(age != "18 - 29", age != "30 - 39", age != "40 - 49", age != "N/A" , !is.na(age))
+
+# Make data frame
 dat_clean_age=data.frame(dat_clean_age)
+
+# Create factor or numeric variables
 dat_clean_age$gender=factor(dat_clean_age$gender)
 dat_clean_age$age=factor(dat_clean_age$age)
 dat_clean_age$PASE_tot=as.numeric(dat_clean_age$PASE_tot)
@@ -64,25 +51,28 @@ dat_clean_age$affective_anxiety=as.numeric(dat_clean_age$affective_anxiety)
 dat_clean_age$Sedentary_tot=as.numeric(dat_clean_age$Sedentary_tot)
 dat_clean_age$pact_overall_flexibility=as.numeric(dat_clean_age$pact_overall_flexibility)
 ```
-
+# Analysis and Visualization of correlations
 ```{r}
-#library(GGally)
-
-#scatterplotMatrix(~PASE_tot+GAS_score+somatic_anxiety+cognitive_anxiety+affective_anxiety+depression_tot+loneliness,id=list(n=3), data=dat_clean_age)
+# Create names for data we want to analyze
 
 names=c("PASE_tot","Sedentary_tot","GAS_score","depression_tot","loneliness", "somatic_anxiety","cognitive_anxiety", "affective_anxiety","pact_overall_flexibility")
 
-dat_test=data.frame(cbind(dat_clean_age$PASE_tot,dat_clean_age$Sedentary_tot,dat_clean_age$GAS_score,dat_clean_age$depression_tot,dat_clean_age$loneliness, dat_clean_age$somatic_anxiety,dat_clean_age$cognitive_anxiety,dat_clean_age$affective_anxiety,dat_clean_age$pact_overall_flexibility))
+# Bind columns to new data frame we want to analyze
+
+dat_test=data.frame(cbind(dat_clean_age$PASE_tot,dat_clean_age$Sedentary_tot,dat_clean_age$GAS_score, dat_clean_age$depression_tot,dat_clean_age$loneliness, dat_clean_age$somatic_anxiety, dat_clean_age$cognitive_anxiety, dat_clean_age$affective_anxiety,dat_clean_age$pact_overall_flexibility))
+
+# Add names to column
 colnames(dat_test)=names
 
-#pairs(dat_test[,1:9], lower.panel = NULL)
+# Create scatterplotmatrix of new data
+pairs(dat_test[,1:9], lower.panel = NULL)
 
 
 rcorr(as.matrix(dat_test), type=c("pearson"))
 
 ```
 
-
+# Visualization of responses based on zipcodes
 ```{r}
 #install.packages("mapdata")
 library("mapdata")
