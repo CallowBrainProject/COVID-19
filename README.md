@@ -1,4 +1,4 @@
-# COVID-19
+# COVID-19 paper analysis
 The following code uses the zipcode library in R to create a heatmap of where participants who completed our COVID-19 survey live.
 
 Addapted from the following website
