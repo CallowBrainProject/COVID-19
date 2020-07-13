@@ -1,3 +1,5 @@
+#!/usr/bin/env Rscript 
+# Writted for Rmarkdown
 ---
 title: "COVID-19 Regression Analysis"
 author: "Daniel Callow"
